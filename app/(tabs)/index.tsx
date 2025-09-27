@@ -1,5 +1,8 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { NavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+
 import {
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -17,6 +20,10 @@ interface ChatMessage {
   content: string;
   ts: number;
 }
+type RootStackParamList = {
+  Chat: undefined;
+  profile: undefined;
+};
 
 // TODO: move key to secure storage / env for real usage
 const OPENAI_API_KEY = process.env.EXPO_PUBLIC_OPENAI_API_KEY as string | undefined;
@@ -34,6 +41,7 @@ interface FinanceSnapshot {
 }
 
 export default function ChatScreen() {
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
@@ -46,6 +54,10 @@ export default function ChatScreen() {
   // Example balance (placeholder)
   const [balance] = useState(12345.67);
 
+  // Profile picture state
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [userName, setUserName] = useState("User");
+
   // One stable fabricated finance snapshot per session
   const financeSnapshotRef = useRef<FinanceSnapshot | null>(null);
 
@@ -55,10 +67,36 @@ export default function ChatScreen() {
     }
   }, []);
 
+  // Load profile data when screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      loadProfileData();
+    }, [])
+  );
+
+
+  const loadProfileData = async () => {
+    try {
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      const settings = await AsyncStorage.getItem('appSettings');
+      if (settings) {
+        const parsedSettings = JSON.parse(settings);
+        if (parsedSettings.profileImage) {
+          setProfileImage(parsedSettings.profileImage);
+        }
+        if (parsedSettings.userName) {
+          setUserName(parsedSettings.userName);
+        }
+      }
+    } catch (error) {
+      console.log('Error loading profile data:', error);
+    }
+  };
+
   useEffect(() => {
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 40);
   }, [messages, sending, typingMessage, isBotTyping]);
-
+``
   const makeId = () =>
     Math.random().toString(36).slice(2) + Date.now().toString(36);
 
@@ -94,8 +132,8 @@ export default function ChatScreen() {
 
   // Initial greeting
   useEffect(() => {
-    enqueueBotMessage("Hi, I'm Georgio. How can I help you save some money today?");
-  }, []);
+    enqueueBotMessage(`Hi, I'm Georgio. How can I help you save some money today, ${userName}?`);
+  }, [userName]);
 
   // Build system instructions + context
   function buildSystemMessage() {
@@ -111,6 +149,7 @@ export default function ChatScreen() {
     return (
       `You are Georgio, a concise finance assistant. ` +
       `You have access to the user's (FAKE / DEMO) finance snapshot for this session. ` +
+      `The user's name is ${userName}. ` +
       `Never say it's fake; answer confidently and briefly (<=2 sentences). ` +
       `If user asks about spending, use provided numbers; if category missing, infer a plausible small amount consistent with totals. ` +
       `Use $ with commas, round to nearest whole dollar unless user asks for more precision. ` +
@@ -193,6 +232,15 @@ export default function ChatScreen() {
     sendMessage();
   }
 
+  // Get user initials for fallback
+  const getUserInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase())
+      .slice(0, 2)
+      .join('');
+  };
+
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
@@ -202,8 +250,16 @@ export default function ChatScreen() {
             {balance.toLocaleString(undefined, { style: 'currency', currency: 'USD' })}
           </Text>
         </View>
-        <Pressable style={({ pressed }) => [styles.profileBtn, pressed && { opacity: 0.7 }]}>
-          <Text style={styles.profileInitials}>U</Text>
+        {/* Profile button with image or initials */}
+        <Pressable 
+          style={({ pressed }) => [styles.profileBtn, pressed && { opacity: 0.7 }]}
+          onPress={() => navigation.navigate('profile')} 
+        >
+          {profileImage ? (
+            <Image source={{ uri: profileImage }} style={styles.profileImage} />
+          ) : (
+            <Text style={styles.profileInitials}>{getUserInitials(userName)}</Text>
+          )}
         </Pressable>
       </View>
       <KeyboardAvoidingView
@@ -354,7 +410,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#334155'
+    borderColor: '#334155',
+    overflow: 'hidden', // Ensures image fits within circular bounds
+  },
+  profileImage: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
   },
   profileInitials: {
     color: '#e2e8f0',
