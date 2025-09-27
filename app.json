@@ -1,15 +1,16 @@
 {
   "expo": {
-    "name": "finance-chatbot",
-    "slug": "finance-chatbot",
+    "name": "",
+    "slug": "finaBot",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "financechatbot",
+    "icon": "./assets/images/splash.png",
+    "scheme": "finaBot",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.emmanuel1996.finaBot"
     },
     "android": {
       "adaptiveIcon": {
@@ -30,7 +31,6 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",
