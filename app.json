@@ -27,18 +27,30 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router",
-      [
-        "expo-splash-screen",
-        {
-          "imageWidth": 200,
-          "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
-          "dark": {
-            "backgroundColor": "#000000"
-          }
-        }
-      ]
+"expo-router",
+[
+  "expo-splash-screen",
+  {
+    "imageWidth": 200,
+    "resizeMode": "contain",
+    "backgroundColor": "#ffffff",
+    "dark": {
+      "backgroundColor": "#000000"
+    }
+  }
+],
+[
+  "expo-camera",
+  {
+    "cameraPermission": "Allow access to camera to take photos"
+  }
+],
+[
+  "expo-media-library",
+  {
+    "photosPermission": "Allow access to photo library to save images"
+  }
+]
     ],
     "experiments": {
       "typedRoutes": true,
